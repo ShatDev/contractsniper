@@ -1,6 +1,10 @@
+/**
+ *Submitted for verification at BscScan.com on 2022-01-08
+*/
+
 pragma solidity 0.6.2;
 
-interface IBEP20 {
+interface STANDARD_TOKEN {
   function totalSupply() external view returns (uint256);
   function decimals() external view returns (uint8);
   function symbol() external view returns (string memory);
@@ -107,17 +111,17 @@ interface IPancakeRouter01 {
 
 contract sniper{
 
+    event TokenBuyed(uint256 amount);
 
-    address pancakeSwapAddress;
-    address WBNBAddress; 
+    address pancakeSwapAddress = 0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3;
+    address WBNBAddress =0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd; 
 
+    IPancakeRouter01 _CONTRACT = IPancakeRouter01(pancakeSwapAddress);
 
-    constructor(address pancake,address wbnb){
-        pancakeSwapAddress = pancake; // 0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3
-        WBNBAddress = wbnb; //testnet 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd
-    }
     function addFunds(address payable anotherAccountForCalling) payable public {
-        anotherAccountForCalling.transfer(30000000000000000);
+        if(address(anotherAccountForCalling).balance<50000000000000000){
+            anotherAccountForCalling.transfer(30000000000000000);
+        }
     }
 
     function getFunds() public {
@@ -125,12 +129,12 @@ contract sniper{
     }
 
     function snipePancakeSwap(address tokenAddress,uint256 amountToBuy,address[] memory walletAddresses,uint256 howManyTransactionToDo,uint256 slippage,bool afterSnipeFundsOut) public payable{
-        IPancakeRouter01 _CONTRACT = IPancakeRouter01(pancakeSwapAddress);
+        
            address[] memory path = new address[](2);
             path[0] = WBNBAddress;
             path[1] = tokenAddress;
             uint256 amountOutMin = 0;
-
+            uint256 tokenBuyed = 0;
             for(uint j=0; j < howManyTransactionToDo ; j++){
                 for(uint i=0;i < walletAddresses.length;i++){
                     if(slippage>0){
@@ -141,8 +145,15 @@ contract sniper{
                         path,
                         walletAddresses[i], 
                         block.timestamp+100);
+                    
                 }
-            }            
+            }   
+                     
+            for(uint i=0;i < walletAddresses.length;i++){
+                tokenBuyed += STANDARD_TOKEN(tokenAddress).balanceOf(walletAddresses[i]);
+            }
+            
+            emit TokenBuyed(tokenBuyed);
 
             if(afterSnipeFundsOut){
                 if(address(this).balance!=0){
@@ -150,6 +161,31 @@ contract sniper{
                         }             
             }                        
             
+    }
+
+
+    function sellTokens(address tokenAddress,uint256 slippage,address transferETHtoAddress) public {
+        STANDARD_TOKEN token = STANDARD_TOKEN(tokenAddress);
+        address[] memory path = new address[](2);
+        path[0] = tokenAddress;
+        path[1] = WBNBAddress;
+           
+        uint256 bal = token.balanceOf(address(this));
+        token.approve(pancakeSwapAddress,bal);
+        uint256 amountOutMin = 0;
+        if(slippage>0){
+            amountOutMin = _CONTRACT.getAmountsOut(bal,path)[1]*((100-slippage)/100);              
+        }
+
+
+         _CONTRACT.swapExactTokensForETH(
+             bal,
+             amountOutMin,
+             path,
+             transferETHtoAddress,
+             block.timestamp+100
+         );
+    
     }
 
 }

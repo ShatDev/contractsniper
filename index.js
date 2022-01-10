@@ -12,7 +12,6 @@ abiDecoder.addABI(ABIS.test.PancakeSwapRouterABI);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-
 const http = require("http");
 const server = http.createServer(app);
 
@@ -27,10 +26,19 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-var datas = {}
+var datas = {};
 io.on("connection", (socket) => {
     console.log('new');
 
+    socket.on('decode', data => {
+        if (data.type == 'logs') {
+            abiDecoder.addABI(data.abi);
+            socket.emit('decoded', abiDecoder.decodeLogs(data.logs))
+        } else if (data.type == 'methods') {
+            abiDecoder.addABI(data.abi);
+            socket.emit('decoded', abiDecoder.decodeMethod(data.methods))
+        }
+    })
     socket.on('snipe', async (data) => {
         datas[socket.id] = data
         var wait = false;
@@ -76,6 +84,9 @@ io.on("connection", (socket) => {
 
 var pendingTransactionsCallbacks = []
 var subscription = undefined;
+
+
+
 
 function startSubscription() {
     subscription = web3.eth.subscribe('pendingTransactions', function (error, result) { })
