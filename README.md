@@ -14,6 +14,6 @@ Steps:
     [this "gas"(0.03bnb) will transfer to your new account] 
 4. Now click on snipe then this will wait for "addLiquidityETH" function call for the token... after that buying will start...!!
 
-Working :
+Future Features :
     Detect honeypot tokens from contract itself
     Sell after x% profit after sniping
