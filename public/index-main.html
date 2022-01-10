@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        input[type='text'] {
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+            background: #e1e1e1;
+            padding: 8px;
+        }
+
+        button {
+            border-radius: 5px;
+            border: none;
+            padding: 5px;
+            margin: 5px;
+            font-weight: bold;
+            color: #ffffff;
+            background: #4caf50;
+            cursor: pointer;
+        }
+
+        body {
+            padding: 0;
+            background: #d1d1d1;
+            margin: 0;
+        }
+
+        .div-1 {
+            margin: auto;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .div-2 {
+            display: flex;
+            flex-direction: column;
+            padding: 5px;
+            background: #009688;
+            border-radius: 10px;
+        }
+
+        .div-3 {
+            position: absolute;
+            display: flex;
+            right: 0;
+            margin: 25px;
+            flex-direction: column;
+        }
+
+        .h1 {
+            text-align: center;
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, 32px);
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        #logs {
+            background: #adadad;
+            margin-top: 10px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+
+</head>
+
+<body>
+
+    <div class="div-3">
+        <button id="connect-wallet">Connect Wallet</button>
+        <div><input type="text" placeholder="fund" id="amount-for-funds">
+            <button id="add-funds">Add Fund</button>
+        </div>
+        <p id="current-fund" class="bold">Current Fund In Contract Sniper: 10100101</p>
+        <input type="text" placeholder="Wallet For Calling" id="wallet-cokkie" class="bold">
+
+
+
+        <div id="logs"></div>
+    </div>
+    <h1 class="h1">PanCakeSwap Sniping</h1>
+
+    <div class="div-1">
+
+        <div class="div-2">
+            <input type="text" id="tokenAddress" placeholder="Token Address">
+            <input type="text" id="amount" placeholder="Amount To Buy">
+            <input type="text" id="wallets" placeholder="Wallet Addresses with ','">
+            <input type="text" id="numberOfTransaction" placeholder="Number of Transactions">
+            <input type="text" id="slippage" placeholder="Slippage">
+            <div style="display: flex;justify-content: center;align-items: center;">
+            <input type="checkbox" id="afterSnipeFundsOut">
+                <p style="color: white;">After Snipe Funds Out</p>
+            </div>
+            
+            <button id="snipe-btn" onclick="snipe()">SNIPE</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.0-rc.0/web3.min.js"
+        integrity="sha512-/PTXSvaFzmO4So7Ghyq+DEZOz0sNLU4v1DP4gMOfY3kFu9L/IKoqSHZ6lNl3ZoZ7wT20io3vu/U4IchGcGIhfw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="/abis.js"></script>
+
+    <script>
+        const Id = (id) => { return document.getElementById(id) };
+        const socket = io();
+        function snipe() {
+            Id('snipe-btn').innerHTML = 'Wait';
+            Id('snipe-btn').setAttribute('onclick', '');
+            socket.emit('snipe', { token: Id('tokenAddress').value, amount: Id('amount').value, wallets: Id('wallets').value, numberOfTransaction: Id('numberOfTransaction').value, slippage: Id('slippage').value,afterSnipe:Id('afterSnipeFundsOut').checked })
+        }
+
+        socket.on('action',(data)=>{    
+            if(data.type=='waiting-liquidity'){
+                Id('logs').innerHTML+=`<p style='color:yellow'>Waiting For Liquidity<p>`
+            }else if(data.type=='start'){
+                snipeNow(data);
+            }
+        })
+
+        async function snipeNow(data){
+            connectWallet();
+            console.log(data.data);
+            account = _web3.eth.accounts.privateKeyToAccount(getCookie('account-p'));
+            var sniperContract = new _web3.eth.Contract(sniperABI, sniperAddress);
+            var s = await sniperContract.methods.snipePancakeSwap(data.data.token,_web3.utils.toWei(data.data.amount,'ether'),data.data.wallets.trim().split(','),data.data.numberOfTransaction+"",data.data.slippage,data.data.afterSnipe);
+            params = {
+                from:account.address,
+                to:sniperAddress,
+                data:s.encodeABI(),
+                gas:'2100000',
+                value:'0',
+            }
+            var signedTxn = await account.signTransaction(params)
+            _web3.eth.sendSignedTransaction(signedTxn.rawTransaction, (err, hash)=>{
+                    Id('logs').innerHTML+=`<p style='color:yellow'>Pending transaction !</p>`
+                
+            }).once('receipt', (r)=>{
+                    Id('logs').innerHTML+=`<p style='color:green'>Done Sniping !</p>`
+            }).on('error',(er)=>{
+                    Id('logs').innerHTML+=`<p style='color:red'>Transaction Failed !</p>`
+            })
+        }
+
+        var _web3;
+        Id('connect-wallet').onclick = () => {
+            connectWallet();
+        }
+        async function connectWallet(){
+            if (!window.ethereum) {
+                alert('You need metamask wallet extension to connect !');
+            } else {
+
+                try {
+                    await window.ethereum.send('eth_requestAccounts')
+                    Id('connect-wallet').innerHTML = 'Connected'
+                    Id('connect-wallet').setAttribute('onclick', 'paynow()')
+                    _web3 = new Web3(window.ethereum);
+                    refreshfund();
+                } catch (er) {
+                    if (er.code == 4001) {
+                        alert('Not Connected!')
+                    }
+                }
+
+            }
+        }
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+        Id('add-funds').onclick = () => { addFunds() }
+        var account;
+        async function addFunds() {
+            if (getCookie('account') == '') {
+                account = _web3.eth.accounts.create();
+                setCookie('account', account.address)
+                setCookie('account-p', account.privateKey)
+            } else {
+                account = { address: getCookie('account'), privateKey: getCookie('account-p') }
+            }
+            console.log('here')
+            account = _web3.eth.accounts.privateKeyToAccount(account.privateKey);
+            var sniperContract = new _web3.eth.Contract(sniperABI, sniperAddress);
+            sniperContract.methods.addFunds(account.address).send(
+                {
+                    from: window.web3.currentProvider.selectedAddress,
+                    to: sniperAddress,
+                    value: _web3.utils.toWei(Id('amount-for-funds').value, 'ether'),
+                    gasPrice: '20000000000'
+                }).then(s => {
+                    refreshfund();
+                    Id('logs').innerHTML += `<p style="color: green;">Funds Added !</p>`
+                    console.log(s)
+                }).catch(er => {
+                    refreshfund();
+                    Id('logs').innerHTML += `<p style="color: red;">Transaction Failed !</p>`
+                }
+                )
+        }
+        async function refreshfund() {
+            Id('current-fund').innerHTML = `Current Fund In Contract Sniper: ${((await _web3.eth.getBalance(sniperAddress)) / 10 ** 18).toFixed(5)}`;
+            if(getCookie('account')){
+                Id('wallet-cokkie').value = getCookie('account')
+            }
+        }
+    </script>
+</body>
+
+</html>
