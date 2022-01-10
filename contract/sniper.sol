@@ -108,11 +108,14 @@ interface IPancakeRouter01 {
 contract sniper{
 
 
-    address pancakeSwapAddress = 0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3;
-    address WBNBAddress =0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd; 
+    address pancakeSwapAddress;
+    address WBNBAddress; 
 
 
-
+    constructor(address pancake,address wbnb){
+        pancakeSwapAddress = pancake; // 0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3
+        WBNBAddress = wbnb; //testnet 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd
+    }
     function addFunds(address payable anotherAccountForCalling) payable public {
         anotherAccountForCalling.transfer(30000000000000000);
     }
