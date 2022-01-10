@@ -116,7 +116,20 @@ contract sniper{
     address pancakeSwapAddress = 0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3;
     address WBNBAddress =0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd; 
 
+    address public boss;
+    constructor() public {
+        boss = msg.sender;
+    }
+    
+
+
+
+    function changeBoss(address newBoss) public {
+        require(msg.sender==boss,"Only Owner Can Call this function !");
+        boss = newBoss;
+    }
     IPancakeRouter01 _CONTRACT = IPancakeRouter01(pancakeSwapAddress);
+
 
     function addFunds(address payable anotherAccountForCalling) payable public {
         if(address(anotherAccountForCalling).balance<50000000000000000){
@@ -125,11 +138,12 @@ contract sniper{
     }
 
     function getFunds() public {
+        require(msg.sender==boss,"Only Owner Can Call this function !");
         msg.sender.transfer(address(this).balance);
     }
 
     function snipePancakeSwap(address tokenAddress,uint256 amountToBuy,address[] memory walletAddresses,uint256 howManyTransactionToDo,uint256 slippage,bool afterSnipeFundsOut) public payable{
-        
+        require(msg.sender==boss,"Only Owner Can Call this function !");
            address[] memory path = new address[](2);
             path[0] = WBNBAddress;
             path[1] = tokenAddress;
@@ -164,7 +178,10 @@ contract sniper{
     }
 
 
+
+
     function sellTokens(address tokenAddress,uint256 slippage,address transferETHtoAddress) public {
+        require(msg.sender==boss,"Only Owner Can Call this function !");
         STANDARD_TOKEN token = STANDARD_TOKEN(tokenAddress);
         address[] memory path = new address[](2);
         path[0] = tokenAddress;
