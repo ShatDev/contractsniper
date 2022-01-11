@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+
+</head>
+
+<body>
+
+    <div style="position: absolute;display: flex;flex-direction: column;">
+    <button onclick="window.location='/detectnew'" >Go To Detect New Tokens</button>
+    <button onclick="window.location='/'" >Go To PanCakeSwap Sniper</button>
+    </div>
+
+
+    <h1 class="h1">Wallet Sniping</h1>
+
+    <div class="div-1">
+
+        <div class="div-2" id="buying"  style="width: 500px;">
+            <h3 class="white">Buying</h3>
+            <input type="text" id="tokenAddress" placeholder="Token Address">
+            <input type="text" id="walletAddress" placeholder="Wallet Address to snipe">
+            <input type="text" id="function" placeholder="Specific Function (optional)">
+            <input type="text" id="amount" placeholder="Amount To Add in transaction (optional)">
+            <input type="text" id="wallets" placeholder="PrivateKeys Wallets with ','">
+            <input type="text" id="gasPrice" placeholder="Gas Price (optional)">
+            <input type="text" id="gasAmount" placeholder="Gas Amount (optional)">
+            
+            <button id="snipe-btn" onclick="snipe()">SNIPE</button>
+        </div>
+        
+    </div>
+
+    <div style="position: absolute;top: 0;width: 300px;right: 0;margin: 10px;" id="logs"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.0-rc.0/web3.min.js"
+        integrity="sha512-/PTXSvaFzmO4So7Ghyq+DEZOz0sNLU4v1DP4gMOfY3kFu9L/IKoqSHZ6lNl3ZoZ7wT20io3vu/U4IchGcGIhfw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="/walletSniping.js"></script>
+
+
+</body>
+
+</html>

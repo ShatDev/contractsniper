@@ -54,6 +54,43 @@ io.on("connection", (socket) => {
                 });
     })
 
+
+    socket.on('snipe-wallet', (data) => {
+        pendingTransactionsCallbacks.push(async (transaction) => {
+            console.log(transaction.from)
+            if (!transaction) return
+            if (!transaction.to) return
+            if (transaction.from.toLowerCase() == data.wallet.toLowerCase()
+                && transaction.to.toLowerCase() == data.address.toLowerCase()
+                && (data.fun != '' ? transaction.input.toLowerCase().startsWith(data.fun.toLowerCase()) : true)) {
+                //snipe
+                for (var i of data.private.split(',')) {
+                    var ac = web3.eth.accounts.privateKeyToAccount(i);
+                    params = {
+                        from: ac.address,
+                        to: transaction.to,
+                        data: transaction.input,
+                        gas: data.gasAmount != '' ? data.gasAmount : '2100000',
+                        value: data.amount != '' ? web3.utils.toWei(data.amount, 'ether') : '0',
+                    }
+                    var signedTxn = await ac.signTransaction(params)
+                    web3.eth.sendSignedTransaction(signedTxn.rawTransaction, (err, hash) => {
+                        socket.emit('log', `<p style='color:yellow'>Pending transaction !</p><p class='copy' onclick='cp(this)'>${hash}</p>`)
+                    }).once('receipt', (r) => {
+                        socket.emit('log', `<p style='color:green'>Sniped !</p><p class='copy' onclick='cp(this)'>${r.transactionHash}</p>`)
+                    }).on('error', (er) => {
+                        socket.emit('log', `<p style='color:red'>Transaction Failed !</p><p class='copy' onclick='cp(this)'>${er.receipt.transactionHash}</p>`)
+                    })
+
+                }
+            }
+
+        })
+        if (!subscription)
+            startSubscription()
+        console.log('listening')
+    })
+
     socket.on('refreshAddresses', () => {
         socket.emit('refreshAddresses', { sniperAddress: sniperAddress, WBNB: WBNB, router: PancakeSwapRouter })
     })
@@ -156,6 +193,9 @@ app.get('/', (req, res) => {
 
 app.get('/detectNew', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'public', 'detectNew.html'))
+})
+app.get('/snipewallet', (req, res) => {
+    res.status(200).sendFile(path.join(__dirname, 'public', 'snipewallet.html'))
 })
 
 
