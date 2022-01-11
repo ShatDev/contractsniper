@@ -15,9 +15,9 @@
 
     <div style="position: absolute;display: flex;flex-direction: column;">
         <button onclick="window.location='/detectnew'" >Go To Detect New Tokens</button>
-        <button onclick="window.location='/snipeafterfunction'" >Snipe After a function call</button>
+        <button class='active' onclick="window.location='/snipeafterfunction'" >Snipe After a function call</button>
         <button onclick="window.location='/snipewallet'" >Go To Snipe Wallets</button>
-        <button class='active' onclick="window.location='/'" >Snipe PanCakeSwap</button>
+        <button onclick="window.location='/'" >Snipe PanCakeSwap</button>
     </div>
 
 
@@ -60,6 +60,7 @@
             <h3 class="white">Buying</h3>
             <input type="text" id="tokenAddress" placeholder="Token Address">
             <input type="text" id="amount" placeholder="Amount To Buy">
+            <input type="text" id="function" placeholder="Function after snipe">
             <input type="text" id="wallets" placeholder="Wallet Addresses with ','">
             <input type="text" id="numberOfTransaction" placeholder="Number of Transactions">
             <input type="text" id="slippage" placeholder="Slippage">
@@ -84,7 +85,7 @@
         integrity="sha512-/PTXSvaFzmO4So7Ghyq+DEZOz0sNLU4v1DP4gMOfY3kFu9L/IKoqSHZ6lNl3ZoZ7wT20io3vu/U4IchGcGIhfw=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="/abis.js"></script>
-    <script src="/script.js"></script>
+    <script src="/snipeAfterFunction.js"></script>
 
 
 </body>

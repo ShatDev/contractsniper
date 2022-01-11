@@ -127,3 +127,6 @@ input[type='text'] {
 #logs>p{
     margin: 5px!important;
 }
+.active{
+    background: #ff9800;
+}

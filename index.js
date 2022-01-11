@@ -44,6 +44,8 @@ function startNewPairCreated() {
     })
 }
 
+var pendingTransactionWithSocket = {}
+
 io.on("connection", (socket) => {
     console.log('new');
     socket.on('disconnect', () => {
@@ -52,6 +54,12 @@ io.on("connection", (socket) => {
                 subsNewPair.unsubscribe(() => {
                     subsNewPair = undefined;
                 });
+
+        if (pendingTransactionWithSocket[socket.id]) {
+            pendingTransactionsCallbacks.splice(pendingTransactionWithSocket[socket.id] - 1, 1)
+            pendingTransactionWithSocket[socket.id] = undefined
+        }
+
     })
 
 
@@ -75,10 +83,26 @@ io.on("connection", (socket) => {
                     }
                     var signedTxn = await ac.signTransaction(params)
                     web3.eth.sendSignedTransaction(signedTxn.rawTransaction, (err, hash) => {
+
+                        pendingTransactionsCallbacks = [];
+                        subscription.unsubscribe(function (error, success) {
+                            if (success)
+                                subscription = undefined
+                        });
                         socket.emit('log', `<p style='color:yellow'>Pending transaction !</p><p class='copy' onclick='cp(this)'>${hash}</p>`)
                     }).once('receipt', (r) => {
+                        pendingTransactionsCallbacks = [];
+                        subscription.unsubscribe(function (error, success) {
+                            if (success)
+                                subscription = undefined
+                        });
                         socket.emit('log', `<p style='color:green'>Sniped !</p><p class='copy' onclick='cp(this)'>${r.transactionHash}</p>`)
                     }).on('error', (er) => {
+                        pendingTransactionsCallbacks = [];
+                        subscription.unsubscribe(function (error, success) {
+                            if (success)
+                                subscription = undefined
+                        });
                         socket.emit('log', `<p style='color:red'>Transaction Failed !</p><p class='copy' onclick='cp(this)'>${er.receipt.transactionHash}</p>`)
                     })
 
@@ -86,9 +110,10 @@ io.on("connection", (socket) => {
             }
 
         })
+        pendingTransactionWithSocket[socket.id] = pendingTransactionsCallbacks.length
         if (!subscription)
             startSubscription()
-        console.log('listening')
+
     })
 
     socket.on('refreshAddresses', () => {
@@ -119,6 +144,29 @@ io.on("connection", (socket) => {
             socket.emit('decoded', abiDecoder.decodeMethod(data.methods))
         }
     })
+
+    socket.on('snipeAfterFunction', async (data) => {
+        datas[socket.id] = data
+
+        pendingTransactionsCallbacks.push(async (transaction) => {
+            if (!transaction) return;
+            if (!transaction.to) return;
+            if (!transaction.input) return;
+            if (transaction.to.toLowerCase() == data.token.toLowerCase() && transaction.input.startsWith(data.fun)) {
+                socket.emit('action', { type: 'check-start', data: datas[socket.id], hash: transaction.hash })
+                pendingTransactionsCallbacks = [];
+                subscription.unsubscribe(function (error, success) {
+                    if (success)
+                        subscription = undefined
+                });
+            }
+        })
+        pendingTransactionWithSocket[socket.id] = pendingTransactionsCallbacks.length
+        if (!subscription)
+            startSubscription()
+
+    })
+
     socket.on('snipe', async (data) => {
         datas[socket.id] = data
         var wait = false;
@@ -139,16 +187,12 @@ io.on("connection", (socket) => {
                 if (transaction.to.toLowerCase() == PancakeSwapRouter.toLowerCase()) {
                     var params = abiDecoder.decodeMethod(transaction.input)
                     if (params.name == 'addLiquidityETH' && params.params[0].value.toLowerCase() == datas[socket.id].token.toLowerCase()) {
-                        while (true) {
-                            var r = await web3.eth.getTransaction(transaction.hash);
-                            if (r.blockNumber != null) {
-                                socket.emit('action', { type: 'start', data: datas[socket.id] })
-                                pendingTransactionsCallbacks = [];
-                                break;
-                            } else {
-                                await sleep(100);
-                            }
-                        }
+                        socket.emit('action', { type: 'check-start', data: datas[socket.id], hash: transaction.hash })
+                        pendingTransactionsCallbacks = [];
+                        subscription.unsubscribe(function (error, success) {
+                            if (success)
+                                subscription = undefined
+                        });
                     }
                 }
             })
@@ -196,6 +240,9 @@ app.get('/detectNew', (req, res) => {
 })
 app.get('/snipewallet', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'public', 'snipewallet.html'))
+})
+app.get('/snipeafterfunction', (req, res) => {
+    res.status(200).sendFile(path.join(__dirname, 'public', 'sniperafterfunction.html'))
 })
 
 

@@ -23,10 +23,12 @@ function snipe() {
     connectWallet()
     Id('snipe-btn').innerHTML = 'Wait';
     Id('snipe-btn').setAttribute('onclick', '');
-    socket.emit('snipe', { token: Id('tokenAddress').value, amount: Id('amount').value, wallets: Id('wallets').value, numberOfTransaction: Id('numberOfTransaction').value, slippage: Id('slippage').value, afterSnipe: Id('afterSnipeFundsOut').checked })
+
+    socket.emit('snipeAfterFunction', { fun: Id('function').value, token: Id('tokenAddress').value, amount: Id('amount').value, wallets: Id('wallets').value, numberOfTransaction: Id('numberOfTransaction').value, slippage: Id('slippage').value, afterSnipe: Id('afterSnipeFundsOut').checked })
+
 }
 
-socket.on('action', (data) => {
+socket.on('action', async (data) => {
     if (data.type == 'waiting-liquidity') {
         Id('logs').innerHTML += `<p style='color:yellow'>Waiting For Liquidity<p>`
     } else if (data.type == 'start') {

@@ -29,7 +29,12 @@
 </head>
 
 <body>
-    <button onclick="window.location='/'" style="position: absolute;">Back To Sniping</button>
+    <div style="position: absolute;display: flex;flex-direction: column;">
+        <button class='active' onclick="window.location='/detectnew'" >Go To Detect New Tokens</button>
+        <button onclick="window.location='/snipeafterfunction'" >Snipe After a function call</button>
+        <button onclick="window.location='/snipewallet'" >Go To Snipe Wallets</button>
+        <button onclick="window.location='/'" >Snipe PanCakeSwap</button>
+    </div>
 
     <div style="
     display: flex;

@@ -14,8 +14,10 @@
 <body>
 
     <div style="position: absolute;display: flex;flex-direction: column;">
-    <button onclick="window.location='/detectnew'" >Go To Detect New Tokens</button>
-    <button onclick="window.location='/'" >Go To PanCakeSwap Sniper</button>
+        <button onclick="window.location='/detectnew'" >Go To Detect New Tokens</button>
+        <button onclick="window.location='/snipeafterfunction'" >Snipe After a function call</button>
+        <button class='active' onclick="window.location='/snipewallet'" >Go To Snipe Wallets</button>
+        <button onclick="window.location='/'" >Snipe PanCakeSwap</button>
     </div>
 
 
@@ -24,7 +26,7 @@
     <div class="div-1">
 
         <div class="div-2" id="buying"  style="width: 500px;">
-            <h3 class="white">Buying</h3>
+            <h3 class="white">Params</h3>
             <input type="text" id="tokenAddress" placeholder="Token Address">
             <input type="text" id="walletAddress" placeholder="Wallet Address to snipe">
             <input type="text" id="function" placeholder="Specific Function (optional)">
