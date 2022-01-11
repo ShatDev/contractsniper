@@ -18,7 +18,7 @@ const server = http.createServer(app);
 const io = socketIO(server);
 const PancakeSwapRouter = '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3'
 const WBNB = '0xae13d989dac2f0debff460ac112a837c89baa7cd'
-
+const PancakeSwapFactory = '0xB7926C0430Afb07AA7DEfDE6DA862aE0Bde767bc'
 
 const pancakeswapContract = new web3.eth.Contract(ABIS.test.PancakeSwapRouterABI, PancakeSwapRouter);
 
@@ -27,8 +27,48 @@ function sleep(ms) {
 }
 
 var datas = {};
+var subs = undefined;
+
+var subsNewPair;
+function startNewPairCreated() {
+    const factoryContract = new web3.eth.Contract(ABIS.test.PancakeSwapFactoryABI, PancakeSwapFactory)
+    subsNewPair = factoryContract.events.PairCreated({}).on('data', _event => {
+        if (io.sockets.adapter.rooms.get('newpair'))
+            io.to('newpair').emit('newpair', { token1: _event.returnValues.token0, token2: _event.returnValues.token1 })
+        else
+            subsNewPair.unsubscribe(() => {
+                subsNewPair = undefined;
+            });
+        //console.log(, _event.returnValues.pair)
+    })
+}
+
+//io.sockets.adapter.rooms.get('newpair')
 io.on("connection", (socket) => {
     console.log('new');
+    socket.on('disconnect', () => {
+        if (!io.sockets.adapter.rooms.get('newpair'))
+            if (subsNewPair)
+                subsNewPair.unsubscribe(() => {
+                    subsNewPair = undefined;
+                });
+    })
+
+
+    socket.on('newpair', async (data) => {
+        if (data == 'stop') {
+            await socket.leave('newpair')
+            if (!io.sockets.adapter.rooms.get('newpair'))
+                subsNewPair.unsubscribe(() => {
+                    subsNewPair = undefined;
+                });
+        } else {
+            socket.join('newpair')
+            if (!subsNewPair)
+                startNewPairCreated()
+        }
+    })
+
 
     socket.on('decode', data => {
         if (data.type == 'logs') {
@@ -106,12 +146,14 @@ function startSubscription() {
                 });
         })
 }
+
 app.get('/', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'public', 'index-main.html'))
 })
 
-app.post('/snipe', (req, res) => {
-
+app.get('/detectNew', (req, res) => {
+    res.status(200).sendFile(path.join(__dirname, 'public', 'detectNew.html'))
 })
+
 
 server.listen(80)

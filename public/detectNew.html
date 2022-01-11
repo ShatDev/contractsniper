@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .row {
+            display: flex;
+            border: 1px #939393 solid;
+            justify-content: space-around;
+        }
+
+        .table {
+            background: #adadad;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        p{
+            margin: 6px;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <button onclick="window.location='/'" style="position: absolute;">Back To Sniping</button>
+
+    <div style="
+    display: flex;
+    align-items: center;
+    justify-content: center;">
+        <h1>Detect New Pairs</h1>
+        <button id="start">Start</button>
+    </div>
+
+
+
+
+
+
+
+
+    <div class="table" id='table'>
+    </div>
+
+
+
+    <script src="/abis.js"></script>
+    <script>
+        const socket = io()
+        document.getElementById('start').onclick = () => {
+            if (document.getElementById('start').innerHTML == 'Stop') {
+                document.getElementById('start').style.background = '#4caf50'
+                document.getElementById('start').innerHTML = 'Start'
+                socket.emit('newpair', 'stop');
+            } else {
+                document.getElementById('start').style.background = '#f44336'
+                document.getElementById('start').innerHTML = 'Stop'
+                socket.emit('newpair', 'start');
+            }
+            socket.on('newpair', async (data) => {
+                console.log(data)
+                if (!_web3)
+                    await connectWallet();
+                var contract = [new _web3.eth.Contract(abi, data.token1),new _web3.eth.Contract(abi, data.token2)];
+
+
+
+
+
+                document.getElementById('table').innerHTML += `<div class="row">
+            <div>
+                <div style="display: flex;justify-content: space-around;">
+                    <p>${await contract[0].methods.name().call()}</p>
+                    <p>${await contract[0].methods.symbol().call()}</p>
+                </div>
+                <p>${data.token2}</p>
+            </div>
+            <div>
+                <div style="display: flex;justify-content: space-around;">
+                    <p>${await contract[1].methods.name().call()}</p>
+                    <p>${await contract[1].methods.symbol().call()}</p>
+                </div>
+                <p>${data.token1}</p>
+            </div>
+        </div>
+`
+                //name, symbol, totalSupply, address1, address2
+
+
+
+            })
+
+        }
+
+
+        function cp(e) {
+
+            var copyText = document.createElement("input");
+            copyText.value = e.innerHTML
+            copyText.type = 'text'
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+            alert('Copied!')
+        }
+
+
+        var _web3;
+        var abi = [{ "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true, "signature": "0x95d89b41" }, { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function", "constant": true, "signature": "0x06fdde03" }];
+        async function connectWallet() {
+            if (!window.ethereum) {
+                alert('You need metamask wallet extension to connect !');
+            } else {
+                try {
+                    await window.ethereum.send('eth_requestAccounts')
+                    _web3 = new Web3(window.ethereum);
+                } catch (er) {
+                    if (er.code == 4001) {
+                        alert('Not Connected!')
+                    }
+                }
+
+            }
+        }
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.0-rc.0/web3.min.js"
+        integrity="sha512-/PTXSvaFzmO4So7Ghyq+DEZOz0sNLU4v1DP4gMOfY3kFu9L/IKoqSHZ6lNl3ZoZ7wT20io3vu/U4IchGcGIhfw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+</body>
+
+</html>
