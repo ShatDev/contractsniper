@@ -20,7 +20,8 @@
             margin: 5px;
             border-radius: 5px;
         }
-        p{
+
+        p {
             margin: 6px;
             padding: 0;
         }
@@ -38,17 +39,8 @@
         <button id="start">Start</button>
     </div>
 
-
-
-
-
-
-
-
     <div class="table" id='table'>
     </div>
-
-
 
     <script src="/abis.js"></script>
     <script>
@@ -67,11 +59,7 @@
                 console.log(data)
                 if (!_web3)
                     await connectWallet();
-                var contract = [new _web3.eth.Contract(abi, data.token1),new _web3.eth.Contract(abi, data.token2)];
-
-
-
-
+                var contract = [new _web3.eth.Contract(abi, data.token1), new _web3.eth.Contract(abi, data.token2)];
 
                 document.getElementById('table').innerHTML += `<div class="row">
             <div>

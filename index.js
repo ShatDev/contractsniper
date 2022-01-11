@@ -16,9 +16,10 @@ const http = require("http");
 const server = http.createServer(app);
 
 const io = socketIO(server);
-const PancakeSwapRouter = '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3'
-const WBNB = '0xae13d989dac2f0debff460ac112a837c89baa7cd'
-const PancakeSwapFactory = '0xB7926C0430Afb07AA7DEfDE6DA862aE0Bde767bc'
+const PancakeSwapRouter = '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3';
+const WBNB = '0xae13d989dac2f0debff460ac112a837c89baa7cd';
+const PancakeSwapFactory = '0xB7926C0430Afb07AA7DEfDE6DA862aE0Bde767bc';
+const sniperAddress = '0x6b6692780444ce4524fBf30aF49E92fda3966cDE';
 
 const pancakeswapContract = new web3.eth.Contract(ABIS.test.PancakeSwapRouterABI, PancakeSwapRouter);
 
@@ -43,7 +44,6 @@ function startNewPairCreated() {
     })
 }
 
-//io.sockets.adapter.rooms.get('newpair')
 io.on("connection", (socket) => {
     console.log('new');
     socket.on('disconnect', () => {
@@ -54,6 +54,9 @@ io.on("connection", (socket) => {
                 });
     })
 
+    socket.on('refreshAddresses', () => {
+        socket.emit('refreshAddresses', { sniperAddress: sniperAddress, WBNB: WBNB, router: PancakeSwapRouter })
+    })
 
     socket.on('newpair', async (data) => {
         if (data == 'stop') {

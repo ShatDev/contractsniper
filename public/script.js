@@ -1,3 +1,12 @@
+const socket = io();
+socket.on('refreshAddresses', (data) => {
+    sniperAddress = data.sniperAddress;
+    WBNB = data.WBNB;
+    router = data.router;
+})
+socket.emit('refreshAddresses')
+
+
 Number.prototype.realValue = function () {
     return this.toString().replace(/^([+-])?(\d+).?(\d*)[eE]([-+]?\d+)$/, function (x, s, n, f, c) {
         var l = +c < 0, i = n.length + +c, x = (l ? n : f).length,
@@ -8,7 +17,8 @@ Number.prototype.realValue = function () {
 };
 
 const Id = (id) => { return document.getElementById(id) };
-const socket = io();
+
+
 function snipe() {
     connectWallet()
     Id('snipe-btn').innerHTML = 'Wait';
